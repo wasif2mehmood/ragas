@@ -12,16 +12,6 @@ This repository provides a complete workflow for evaluating RAG systems using mu
 - Python 3.8+
 - OpenAI API key
 
-### Installation
-1. Clone this repository
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Create a `.env` file in the root directory with your OpenAI API key:
-   ```
-   OPENAI_API_KEY=your-openai-api-key-here
-   ```
 
 ## Usage
 
