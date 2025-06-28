@@ -39,7 +39,7 @@ async def test_custom_metrics():
     try:
         conciseness_score = await conciseness_metric._single_turn_ascore(sample, callbacks=None)
         print(f"Conciseness Score: {conciseness_score.score}")
-        print(f"Reasoning: {conciseness_score.reasoning}")
+        # print(f"Reasoning: {conciseness_score.reasoning}")
     except Exception as e:
         print(f"Error testing conciseness metric: {e}")
     
