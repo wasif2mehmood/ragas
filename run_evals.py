@@ -5,6 +5,13 @@ from dotenv import load_dotenv
 from ragas.metrics import faithfulness,answer_relevancy,context_precision,context_recall,context_entity_recall,answer_similarity,answer_correctness
 from ragas import evaluate
 
+# Import custom metrics
+from custom_metrics import ResponseConcisenessMetric
+
+# Import LLM for custom metrics
+from ragas.llms import LangchainLLMWrapper
+from langchain_openai import ChatOpenAI
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -34,11 +41,20 @@ print("\nAfter conversion:")
 print(f"contexts type: {type(df['contexts'].iloc[0])}")
 print(f"contexts sample: {df['contexts'].iloc[0]}")
 
+# Initialize the LLM for custom metrics
+evaluator_llm = LangchainLLMWrapper(ChatOpenAI(model="gpt-3.5-turbo"))
+
+# Initialize custom metrics
+response_conciseness = ResponseConcisenessMetric(llm=evaluator_llm)
+
 syn_dataset = Dataset.from_pandas(df)
 
+# bulk_score = evaluate(syn_dataset,metrics=[
+#     response_conciseness
+# ])
 bulk_score = evaluate(syn_dataset,metrics=[faithfulness,answer_relevancy,context_precision,context_recall,context_entity_recall,answer_similarity,answer_correctness])
 
 # save the scores to a CSV file
 scores_df = bulk_score.to_pandas()
-scores_df.to_csv('ragas_scores.csv', index=False)
+scores_df.to_csv('./data/ragas_scores.csv', index=False)
 print("Scores saved to ragas_scores.csv")
