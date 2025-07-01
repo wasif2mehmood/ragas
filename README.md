@@ -39,9 +39,7 @@ ragas/
 ├── src/
 │   ├── __init__.py
 │   ├── utils.py                          # Utility functions
-│   ├── response_conciseness_metric.py    # LLM-based conciseness evaluation
-│   ├── jaccard_similarity_metric.py      # General Jaccard similarity
-│   ├── references_jaccard_metric.py      # Reference-specific Jaccard
+│   ├── conciseness.py    # LLM-based conciseness evaluation
 │   ├── tags_jaccard.py                   # Tags Jaccard implementation
 │   └── references_jaccard.py             # References Jaccard implementation
 ├── data/
