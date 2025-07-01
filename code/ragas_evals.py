@@ -9,11 +9,11 @@ from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 
 # Import custom metrics
-from src.tags_jaccard import create_tags_jaccard_metric
-from src.references_jaccard import create_references_jaccard_metric
+from metrics.tags_jaccard import create_tags_jaccard_metric
+from metrics.references_jaccard import create_references_jaccard_metric
 
 # Import utility functions
-from src.utils import (
+from metrics.utils import (
     truncate_context,
     load_dataset,
     load_publication_descriptions,

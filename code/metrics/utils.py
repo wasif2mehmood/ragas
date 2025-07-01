@@ -1,5 +1,11 @@
 import pandas as pd
 import json
+from paths import (
+    GOLDEN_DATASET_CSV_STR,
+    GOLDEN_DATASET_JSON_STR,
+    EVALUATION_RESULTS_CSV_STR,
+    COMPLETE_EVALUATION_RESULTS_CSV_STR
+)
 
 
 def truncate_context(text, max_tokens=8000):
@@ -30,7 +36,7 @@ def truncate_context(text, max_tokens=8000):
         return truncated + "..."
 
 
-def load_dataset(csv_path='data/golden_dataset_with_references.csv'):
+def load_dataset(csv_path=GOLDEN_DATASET_CSV_STR):
     """
     Load the main evaluation dataset.
     
@@ -40,10 +46,12 @@ def load_dataset(csv_path='data/golden_dataset_with_references.csv'):
     Returns:
         pandas.DataFrame: Loaded dataset
     """
-    return pd.read_csv(csv_path)
 
 
-def load_publication_descriptions(json_path='data/golden_dataset.json'):
+    return pd.read_csv(csv_path, nrows=1)
+
+
+def load_publication_descriptions(json_path=GOLDEN_DATASET_JSON_STR):
     """
     Load publication descriptions from JSON file.
     
@@ -110,14 +118,13 @@ def print_evaluation_scores(result):
         print(f"  {name}: {format_score(score)}")
 
 
-def save_evaluation_results(results, df, output_dir='./data'):
+def save_evaluation_results(results, df):
     """
     Save evaluation results to CSV files.
     
     Args:
         results: List of result dictionaries
         df: Original DataFrame
-        output_dir: Directory to save results
         
     Returns:
         tuple: (results_df, complete_results_df)
@@ -128,9 +135,9 @@ def save_evaluation_results(results, df, output_dir='./data'):
     # Merge with original data for complete results
     complete_results = df.merge(results_df, on='publication_external_id', how='left')
     
-    # Save results
-    results_df.to_csv(f'{output_dir}/evaluation_results.csv', index=False)
-    complete_results.to_csv(f'{output_dir}/complete_evaluation_results.csv', index=False)
+    # Save results using paths from paths.py
+    results_df.to_csv(EVALUATION_RESULTS_CSV_STR, index=False)
+    complete_results.to_csv(COMPLETE_EVALUATION_RESULTS_CSV_STR, index=False)
     
     return results_df, complete_results
 

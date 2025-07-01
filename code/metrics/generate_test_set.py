@@ -1,11 +1,17 @@
-from dotenv import load_dotenv
+import sys
 import os
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+
+from dotenv import load_dotenv
 from langchain_community.document_loaders import WebBaseLoader
 from ragas.llms import LangchainLLMWrapper
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 from ragas.testset import TestsetGenerator
+from paths import TEST_SET_CSV_STR
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -29,5 +35,5 @@ df = dataset.to_pandas()
 print(df.head())
 
 # Save to CSV
-df.to_csv("../data/test_set.csv", index=False)
+df.to_csv(TEST_SET_CSV_STR, index=False)
 print("Test set saved to test_set.csv")
