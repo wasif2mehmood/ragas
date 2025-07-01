@@ -6,3 +6,5 @@ data/evaluation_results.csv
 data/golden_dataset.csv
 data/ragas_dataset.csv
 data/test_set.csv
+data/ragas_dataset.csv
+data/test_set.csv
