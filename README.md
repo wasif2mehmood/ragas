@@ -1,92 +1,197 @@
 # Ragas-Pub
 
-A comprehensive RAG (Retrieval-Augmented Generation) evaluation pipeline using the Ragas framework for automated assessment of RAG system performance.
+A comprehensive publication evaluation pipeline using the Ragas framework with custom metrics for automated assessment of publication metadata generation systems.
 
 ## Overview
 
-This repository provides a complete workflow for evaluating RAG systems using multiple metrics including faithfulness, answer relevancy, context precision, context recall, and more.
+This repository provides a complete workflow for evaluating publication processing systems that generate titles, summaries (TL;DR), tags, and references. It uses multiple evaluation metrics including semantic similarity, faithfulness, and custom Jaccard similarity metrics designed specifically for publication data.
+
+## Features
+
+- **Custom Metrics**: Specialized metrics for publication evaluation
+  - **Response Conciseness**: LLM-based evaluation of response efficiency
+  - **Jaccard Similarity**: Set-based comparison for tags and structured data
+  - **References Jaccard**: Specialized metric for reference URL and title comparison
+- **Built-in Ragas Metrics**: Semantic similarity and faithfulness evaluation
+- **Modular Architecture**: Separate metric files and utility functions
+- **Comprehensive Evaluation**: Multi-dimensional assessment of publication metadata
 
 ## Setup
 
 ### Prerequisites
 - Python 3.8+
 - OpenAI API key
+- Required Python packages:
+  ```bash
+  pip install ragas pandas scikit-learn langchain-openai python-dotenv
+  ```
 
+### Environment Setup
+Create a `.env` file in the root directory:
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+## Project Structure
+
+```
+ragas/
+├── src/
+│   ├── __init__.py
+│   ├── utils.py                          # Utility functions
+│   ├── response_conciseness_metric.py    # LLM-based conciseness evaluation
+│   ├── jaccard_similarity_metric.py      # General Jaccard similarity
+│   ├── references_jaccard_metric.py      # Reference-specific Jaccard
+│   ├── tags_jaccard.py                   # Tags Jaccard implementation
+│   └── references_jaccard.py             # References Jaccard implementation
+├── data/
+│   ├── golden_dataset.json               # Publication descriptions
+│   └── golden_dataset_with_references.csv # Evaluation dataset
+├── run_evals.py                          # Main evaluation script
+└── README.md
+```
 
 ## Usage
 
-### 1. Generate Seed Dataset
-Run the test set generation script to create your initial evaluation dataset:
-```bash
-python generate_test_set.py
-```
-This will create a baseline dataset for evaluation.
+### 1. Prepare Your Dataset
 
-### 2. Generate RAG Pipeline Outputs
-Integrate your RAG pipeline and generate responses:
-```bash
-python run_pipeline.py
-```
-**Note:** You need to integrate your specific RAG pipeline implementation in this file. The script should:
-- Load the seed dataset
-- Process queries through your RAG system
-- Generate answers and retrieve relevant contexts
-- Save results to `./data/ragas_dataset.csv`
+Your evaluation dataset should be a CSV file with the following columns:
+- `publication_external_id`: Unique identifier for each publication
+- `title_truth` / `title_generated`: Ground truth and generated titles
+- `tldr_truth` / `tldr_generated`: Ground truth and generated summaries
+- `tags_truth` / `tags_generated`: Ground truth and generated tags (pipe-delimited: `tag1|tag2|tag3`)
+- `references_truth` / `references_generated`: Ground truth and generated references (JSON format)
 
-### 3. Run Evaluations
-Execute the evaluation pipeline to assess your RAG system:
+Example reference format:
+```json
+[{"url": "https://example.com", "title": "Example Paper"}, {"url": "https://another.com", "title": "Another Paper"}]
+```
+
+### 2. Run Evaluation
+
+Execute the evaluation pipeline:
 ```bash
 python run_evals.py
 ```
+
 This will:
-- Load the dataset with RAG outputs
-- Evaluate using multiple Ragas metrics:
-  - **Faithfulness**: Measures hallucination in generated answers
-  - **Answer Relevancy**: Assesses how relevant answers are to questions
-  - **Context Precision**: Evaluates retrieval quality
-  - **Context Recall**: Measures completeness of retrieved context
-  - **Context Entity Recall**: Checks entity coverage in context
-  - **Answer Similarity**: Compares semantic similarity to reference answers
-  - **Answer Correctness**: Overall answer quality assessment
-- Save evaluation scores to `ragas_scores.csv`
+- Load your publication dataset
+- Evaluate each field using multiple metrics:
+  - **Semantic Similarity**: Measures semantic closeness between generated and ground truth text
+  - **Faithfulness**: Evaluates whether generated content is grounded in the source publication
+  - **Jaccard Similarity**: Compares overlap for tags and references
+- Save detailed results to CSV files
 
-## Dataset Format
+### 3. Review Results
 
-Your dataset should be in CSV format with the following columns:
-- `question`: The input query
-- `answer`: Generated response from your RAG system
-- `contexts`: List of retrieved context passages (will be parsed from string)
-- `ground_truth`: Reference answer (optional, for some metrics)
-- `reference_contexts`: Ground truth contexts (optional, will be parsed from string)
-
-## Output
-
-The evaluation results are saved to `ragas_scores.csv` containing:
-- All original dataset columns
-- Individual metric scores for each question
-- Overall performance metrics
+The evaluation generates two output files:
+- `data/evaluation_results.csv`: Metric scores only
+- `data/complete_evaluation_results.csv`: Original data + metric scores
 
 ## Metrics Explained
 
-- **Faithfulness (0-1)**: Higher scores indicate less hallucination
-- **Answer Relevancy (0-1)**: Higher scores mean more relevant answers
-- **Context Precision (0-1)**: Higher scores indicate better retrieval precision
-- **Context Recall (0-1)**: Higher scores mean better context coverage
-- **Answer Correctness (0-1)**: Overall answer quality score
+### Core Metrics
+
+1. **Semantic Similarity (0-1)**
+   - Measures semantic closeness using embeddings
+   - Higher scores indicate better content match
+
+2. **Faithfulness (0-1)**
+   - Evaluates grounding in source content
+   - Higher scores indicate less hallucination
+
+3. **Jaccard Similarity (0-1)**
+   - Set-based overlap comparison
+   - Perfect for tags and structured data
+   - Formula: |intersection| / |union|
+
+### Specialized Metrics
+
+4. **Response Conciseness (0-1)**
+   - LLM-based evaluation of response efficiency
+   - Considers information density, redundancy, and clarity
+   - Available for integration with conciseness evaluation
+
+5. **References Jaccard**
+   - Specialized for reference comparison
+   - Separately evaluates URL and title overlap
+   - Returns average of both scores
+
+## Evaluation Fields
+
+The system evaluates four key publication fields:
+
+| Field | Semantic Similarity | Faithfulness | Jaccard Similarity |
+|-------|-------------------|--------------|-------------------|
+| **Title** | ✅ | ✅ | ❌ |
+| **TL;DR** | ✅ | ✅ | ❌ |
+| **Tags** | ✅ | ✅ | ✅ |
+| **References** | ✅ | ✅ | ✅ |
+
+## Custom Metric Details
+
+### Tags Jaccard Metric
+- Delimiter: `|` (pipe-separated)
+- Case-insensitive comparison
+- Handles empty tag sets gracefully
+
+### References Jaccard Metric
+- Parses JSON-formatted reference lists
+- Compares URLs and titles separately
+- Averages URL and title Jaccard scores
+- Handles malformed JSON gracefully
 
 ## Customization
 
-To adapt this pipeline for your RAG system:
-1. Modify `run_pipeline.py` to integrate your specific RAG implementation
-2. Ensure your output dataset matches the expected format
-3. Adjust evaluation metrics in `run_evals.py` as needed
+### Adding New Metrics
+1. Create a new metric file in `src/`
+2. Inherit from `SingleTurnMetric` or `MetricWithLLM`
+3. Implement the `_single_turn_ascore` method
+4. Import and use in `run_evals.py`
 
-## Troubleshooting
+### Modifying Evaluation Logic
+- Edit field evaluation in `run_evals.py`
+- Customize prompts for faithfulness evaluation
+- Adjust metric parameters in factory functions
 
-- **OpenAI API Error**: Ensure your API key is correctly set in the `.env` file
-- **Data Format Issues**: Check that list columns (contexts, reference_contexts) are properly formatted
-- **Memory Issues**: For large datasets, consider processing in batches
+### Utility Functions
+All utility functions are centralized in `src/utils.py`:
+- Data loading and preprocessing
+- Result formatting and saving
+- Context truncation for large texts
+- Score calculation and summary statistics
+
+
+
+### Performance Tips
+
+- Use smaller models for faster evaluation (`gpt-3.5-turbo` vs `gpt-4`)
+- Process datasets in batches for large evaluations
+- Cache embeddings for repeated evaluations
+- Use context truncation for memory management
 
 ## Contributing
 
-Feel free to submit issues and enhancement requests!
+To contribute to this project:
+1. Fork the repository
+2. Create a feature branch
+3. Add your custom metrics or improvements
+4. Submit a pull request
+
+### Adding New Metrics
+Follow the existing pattern:
+- Create metric file in `src/`
+- Add factory functions
+- Update imports in `run_evals.py`
+- Document in README
+
+## License
+
+This project is open source. Feel free to use and modify for your evaluation needs.
+
+## Support
+
+For issues and questions:
+- Check the troubleshooting section
+- Review the metric documentation
+- Submit an issue on the repository

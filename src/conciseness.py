@@ -43,7 +43,6 @@ Rate on a scale of 0 to 1:
     
     input_model = ConcisenessInput
     output_model = ConcisenessOutput
-   
 
 
 @dataclass

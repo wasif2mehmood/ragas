@@ -29,5 +29,5 @@ df = dataset.to_pandas()
 print(df.head())
 
 # Save to CSV
-df.to_csv("./data/test_set.csv", index=False)
+df.to_csv("../data/test_set.csv", index=False)
 print("Test set saved to test_set.csv")
