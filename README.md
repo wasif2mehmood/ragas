@@ -47,12 +47,6 @@ ragas/
 |   |   |   tags_jaccard.py
 |   |   |   utils.py
 |   |   |
-|   |           jaccard_similarity.cpython-311.pyc
-|   |           references_jaccard.cpython-311.pyc
-|   |           tags_jaccard.cpython-311.pyc
-|   |           utils.cpython-311.pyc
-|   |
-|           paths.cpython-311.pyc
 |
 \---data
         complete_evaluation_results.csv
@@ -85,7 +79,7 @@ Example reference format:
 
 Execute the evaluation pipeline:
 ```bash
-python run_evals.py
+python code/ragas_evals.py
 ```
 
 This will:
