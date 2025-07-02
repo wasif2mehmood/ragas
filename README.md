@@ -23,7 +23,7 @@ This repository provides a complete workflow for evaluating publication processi
 - OpenAI API key
 - Required Python packages:
   ```bash
-  pip install ragas pandas scikit-learn langchain-openai python-dotenv
+  pip install -r requirements.txt
   ```
 
 ### Environment Setup
@@ -36,17 +36,33 @@ OPENAI_API_KEY=your_openai_api_key_here
 
 ```
 ragas/
-├── src/
-│   ├── __init__.py
-│   ├── utils.py                          # Utility functions
-│   ├── conciseness.py    # LLM-based conciseness evaluation
-│   ├── tags_jaccard.py                   # Tags Jaccard implementation
-│   └── references_jaccard.py             # References Jaccard implementation
-├── data/
-│   ├── golden_dataset.json               # Publication descriptions
-│   └── golden_dataset_with_references.csv # Evaluation dataset
-├── run_evals.py                          # Main evaluation script
-└── README.md
++---code
+|   |   paths.py
+|   |   ragas_evals.py
+|   |
+|   +---metrics
+|   |   |   conciseness.py
+|   |   |   generate_test_set.py
+|   |   |   references_jaccard.py
+|   |   |   tags_jaccard.py
+|   |   |   utils.py
+|   |   |
+|   |           jaccard_similarity.cpython-311.pyc
+|   |           references_jaccard.cpython-311.pyc
+|   |           tags_jaccard.cpython-311.pyc
+|   |           utils.cpython-311.pyc
+|   |
+|           paths.cpython-311.pyc
+|
+\---data
+        complete_evaluation_results.csv
+        evaluation_results.csv
+        golden_dataset.csv
+        golden_dataset.json
+        golden_dataset_with_references.csv
+        ragas_dataset.csv
+        test_set.csv
+
 ```
 
 ## Usage
