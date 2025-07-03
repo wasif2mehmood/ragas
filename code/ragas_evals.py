@@ -7,10 +7,13 @@ from langchain_openai import OpenAIEmbeddings
 from ragas.llms import LangchainLLMWrapper
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
+import glob
+import os
 
 # Import custom metrics
 from metrics.tags_jaccard import create_tags_jaccard_metric
 from metrics.references_jaccard import create_references_jaccard_metric
+from metrics.coherence import ContentCoherenceMetric
 
 # Import utility functions
 from metrics.utils import (
@@ -25,14 +28,30 @@ from metrics.utils import (
     prepare_text_for_semantic_similarity
 )
 
+from paths import GOLDEN_DATASET_CSV_STR, GOLDEN_DATASET_JSON_STR
+
 load_dotenv()
 
 
-async def evaluate_dataset():
-    """Evaluate the golden dataset with semantic similarity, Jaccard metrics, and faithfulness."""
+class CoherenceSample:
+    """Custom sample class for coherence evaluation."""
+    def __init__(self, context, title_generated, tldr_generated, references_generated, tags_generated):
+        self.context = context
+        self.title_generated = title_generated
+        self.tldr_generated = tldr_generated
+        self.references_generated = references_generated
+        self.tags_generated = tags_generated
+
+
+async def evaluate_single_dataset(csv_file_path):
+    """Evaluate a single CSV dataset."""
     
-    # Load data using utility functions
-    df = load_dataset()
+    print(f"\n{'='*70}")
+    print(f"EVALUATING: {os.path.basename(csv_file_path)}")
+    print(f"{'='*70}")
+    
+    # Load data
+    df = pd.read_csv(csv_file_path)
     pub_descriptions = load_publication_descriptions()
     
     # Initialize embeddings and metrics
@@ -45,9 +64,10 @@ async def evaluate_dataset():
     
     faithfulness_scorer = Faithfulness(llm=evaluator_llm)
     
-    # Initialize Jaccard metrics
+    # Initialize custom metrics
     tags_jaccard = create_tags_jaccard_metric()
     references_jaccard = create_references_jaccard_metric()
+    coherence_scorer = ContentCoherenceMetric(llm=evaluator_llm)
     
     # Results storage
     results = []
@@ -159,6 +179,24 @@ async def evaluate_dataset():
                 )
                 result['tags_faithfulness'] = await faithfulness_scorer.single_turn_ascore(tags_faithfulness_sample)
             
+            # 5. Content Coherence Evaluation
+            if (context and 
+                pd.notna(row['title_generated']) and 
+                pd.notna(row['tldr_generated']) and 
+                pd.notna(row['references_generated']) and 
+                pd.notna(row['tags_generated'])):
+                
+                # Create custom sample for coherence evaluation
+                coherence_sample = CoherenceSample(
+                    context=context,
+                    title_generated=str(row['title_generated']),
+                    tldr_generated=str(row['tldr_generated']),
+                    references_generated=str(row['references_generated']),
+                    tags_generated=str(row['tags_generated'])
+                )
+                
+                result['content_coherence'] = await coherence_scorer._single_turn_ascore(coherence_sample, callbacks=None)
+            
             results.append(result)
             
             # Print scores using utility function
@@ -172,13 +210,49 @@ async def evaluate_dataset():
             result = initialize_result_dict(row['publication_external_id'])
             results.append(result)
     
-    # Save results and print summary using utility functions
-    results_df, complete_results = save_evaluation_results(results, df)
+    # Save results with dataset name prefix
+    dataset_name = os.path.splitext(os.path.basename(csv_file_path))[0]
+    results_df = pd.DataFrame(results)
+    
+    # Merge with original data
+    complete_results = df.merge(results_df, on='publication_external_id', how='left')
+    
+    # Save files with dataset name prefix
+    results_filename = f"./data/{dataset_name}_evaluation_results.csv"
+    complete_filename = f"./data/{dataset_name}_complete_evaluation_results.csv"
+    
+    results_df.to_csv(results_filename, index=False)
+    complete_results.to_csv(complete_filename, index=False)
+    
+    print(f"\nResults saved to: {results_filename}")
+    print(f"Complete results saved to: {complete_filename}")
+    
+    # Print summary
     print_evaluation_summary(results_df)
     
     return results_df, complete_results
 
 
+async def evaluate_golden_dataset():
+    """Evaluate the main golden dataset."""
+    
+    print("🚀 Starting evaluation of the Golden Dataset")
+    print(f"📁 Dataset path: {GOLDEN_DATASET_CSV_STR}")
+    
+    try:
+        results_df, complete_results = await evaluate_single_dataset(GOLDEN_DATASET_CSV_STR)
+        print("\n✅ Golden dataset evaluation completed!")
+        return results_df, complete_results
+    except Exception as e:
+        print(f"❌ Error evaluating golden dataset: {e}")
+        import traceback
+        traceback.print_exc()
+        return None, None
+
+
+
+
+
 if __name__ == "__main__":
-    # Evaluate entire dataset
-    asyncio.run(evaluate_dataset())
+    # Evaluate datasets
+    asyncio.run(evaluate_golden_dataset())

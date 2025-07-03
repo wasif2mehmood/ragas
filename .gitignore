@@ -10,3 +10,4 @@ data/ragas_dataset.csv
 data/test_set.csv
 /code/__pycache__
 /code/metrics/__pycache__
+code/k.py

@@ -93,30 +93,42 @@ def format_score(score):
     return f"{score:.3f}" if score is not None else "N/A"
 
 
-def print_evaluation_scores(result):
-    """
-    Print evaluation scores in a clean format.
+def print_evaluation_summary(results_df):
+    """Print comprehensive evaluation summary."""
+    print("\n" + "=" * 70)
+    print("EVALUATION SUMMARY")
+    print("=" * 70)
+    print(f"Total Publications Evaluated: {len(results_df)}")
+    print("Results saved to: evaluation_results.csv")
+    print("Complete results saved to: complete_evaluation_results.csv")
     
-    Args:
-        result: Dictionary containing evaluation results
-    """
+    print("\nMETRIC STATISTICS:")
+    print("-" * 50)
+    
+    # List of all metrics to display
     metrics = [
-        ('Title Semantic', 'title_semantic_similarity'),
-        ('Title Faithfulness', 'title_faithfulness'),
-        ('TLDR Semantic', 'tldr_semantic_similarity'),
-        ('TLDR Faithfulness', 'tldr_faithfulness'),
-        ('References Semantic', 'references_semantic_similarity'),
-        ('References Jaccard', 'references_jaccard_similarity'),
-        ('References Faithfulness', 'references_faithfulness'),
-        ('Tags Semantic', 'tags_semantic_similarity'),
-        ('Tags Jaccard', 'tags_jaccard_similarity'),
-        ('Tags Faithfulness', 'tags_faithfulness')
+        ('title_semantic_similarity', 'Title Semantic Similarity'),
+        ('tldr_semantic_similarity', 'Tldr Semantic Similarity'),
+        ('references_semantic_similarity', 'References Semantic Similarity'),
+        ('tags_semantic_similarity', 'Tags Semantic Similarity'),
+        ('references_jaccard_similarity', 'References Jaccard Similarity'),
+        ('tags_jaccard_similarity', 'Tags Jaccard Similarity'),
+        ('title_faithfulness', 'Title Faithfulness'),
+        ('tldr_faithfulness', 'Tldr Faithfulness'),
+        ('references_faithfulness', 'References Faithfulness'),
+        ('tags_faithfulness', 'Tags Faithfulness'),
+        ('content_coherence', 'Content Coherence')  # Add this line
     ]
     
-    for name, key in metrics:
-        score = result.get(key)
-        print(f"  {name}: {format_score(score)}")
-
+    for metric_col, metric_name in metrics:
+        if metric_col in results_df.columns:
+            valid_scores = results_df[metric_col].dropna()
+            if len(valid_scores) > 0:
+                print(f"\n{metric_name}:")
+                print(f"  Count: {len(valid_scores)}")
+                print(f"  Mean:  {valid_scores.mean():.3f}")
+                print(f"  Std:   {valid_scores.std():.3f}")
+                print(f"  Range: {valid_scores.min():.3f} - {valid_scores.max():.3f}")
 
 def save_evaluation_results(results, df):
     """
@@ -203,30 +215,22 @@ def print_evaluation_summary(results_df):
         print(f"  Range: {stat['min']:.3f} - {stat['max']:.3f}")
 
 
-def initialize_result_dict(publication_id):
-    """
-    Initialize result dictionary with all metric keys.
-    
-    Args:
-        publication_id: ID of the publication
-        
-    Returns:
-        dict: Initialized result dictionary
-    """
+def initialize_result_dict(publication_external_id):
+    """Initialize a result dictionary with None values for all metrics."""
     return {
-        'publication_external_id': publication_id,
+        'publication_external_id': publication_external_id,
         'title_semantic_similarity': None,
-        'tldr_semantic_similarity': None,
-        'references_semantic_similarity': None,
-        'tags_semantic_similarity': None,
-        'references_jaccard_similarity': None,
-        'tags_jaccard_similarity': None,
         'title_faithfulness': None,
+        'tldr_semantic_similarity': None,
         'tldr_faithfulness': None,
+        'references_semantic_similarity': None,
+        'references_jaccard_similarity': None,
         'references_faithfulness': None,
-        'tags_faithfulness': None
+        'tags_semantic_similarity': None,
+        'tags_jaccard_similarity': None,
+        'tags_faithfulness': None,
+        'content_coherence': None  # Add this line
     }
-
 
 def prepare_text_for_semantic_similarity(text, field_type=None):
     """
@@ -243,3 +247,23 @@ def prepare_text_for_semantic_similarity(text, field_type=None):
     if field_type == 'tags':
         text = text.replace('|', ', ')
     return text
+
+def print_evaluation_scores(result):
+    """Print evaluation scores for a single publication."""
+    scores = [
+        ("Title Semantic", result.get('title_semantic_similarity')),
+        ("Title Faithfulness", result.get('title_faithfulness')),
+        ("TLDR Semantic", result.get('tldr_semantic_similarity')),
+        ("TLDR Faithfulness", result.get('tldr_faithfulness')),
+        ("References Semantic", result.get('references_semantic_similarity')),
+        ("References Jaccard", result.get('references_jaccard_similarity')),
+        ("References Faithfulness", result.get('references_faithfulness')),
+        ("Tags Semantic", result.get('tags_semantic_similarity')),
+        ("Tags Jaccard", result.get('tags_jaccard_similarity')),
+        ("Tags Faithfulness", result.get('tags_faithfulness')),
+        ("Content Coherence", result.get('content_coherence'))  # Add this line
+    ]
+    
+    for name, score in scores:
+        if score is not None:
+            print(f"  {name}: {score:.3f}")
